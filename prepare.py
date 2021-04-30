@@ -13,6 +13,16 @@ def missing_rows(df):
     missing_df = pd.DataFrame({'num_rows_missing': missing_row_raw, 'pct_rows_missing': missing_row_pct})
     return missing_df
 
+# This function creates dummy variables for the room_type column
+def airbnb_dummies(df):
+    # Create dummy variables for the room_type column
+    type_dummies = pd.get_dummies(df['room_type'], drop_first=False)
+    # rename these dummy columns to each of the room types
+    type_dummies = type_dummies.rename(columns={type_dummies.columns[0] : 'entire_home', type_dummies.columns[1] : 'hotel_room', type_dummies.columns[2] : 'private_room', type_dummies.columns[3] : 'shared_room'})
+    # attach these new dummy columns to the original dataframe
+    df = pd.concat([df, type_dummies], axis=1)
+    return df
+
 # This function splits a dataframe into train, validate, and test dataframes.
 def df_split(df):
     # Creating two data frames, a larger one with train and validate combined, and the test dataframe
@@ -38,3 +48,11 @@ def airbnb_scaler(train, validate, test):
     validate_scaled[['minimum_nights', 'number_of_reviews', 'reviews_per_month', 'availability_365']] = scaler.fit_transform(validate_to_scale)
     test_scaled[['minimum_nights', 'number_of_reviews', 'reviews_per_month', 'availability_365']] = scaler.fit_transform(test_to_scale)
     return train_scaled, validate_scaled, test_scaled
+
+# This function combines a few of the preparation functions together in order to quickly prep data for exploration.
+def prep_data(df):
+    df = df.drop(columns='neighbourhood_group')
+    df = airbnb_dummies(df)
+    train, validate, test = df_split(df)
+    train_scaled, validate_scaled, test_scaled = airbnb_scaler(train, validate, test)
+    return train, validate, test, train_scaled, validate_scaled, test_scaled
